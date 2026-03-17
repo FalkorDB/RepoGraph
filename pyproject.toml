@@ -23,12 +23,6 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Quality Assurance",
 ]
-
-[project.urls]
-Homepage = "https://github.com/FalkorDB/RepoGraph"
-Repository = "https://github.com/FalkorDB/RepoGraph"
-Issues = "https://github.com/FalkorDB/RepoGraph/issues"
-Documentation = "https://github.com/FalkorDB/RepoGraph#readme"
 dependencies = [
     "falkordb>=1.6.0,<2.0.0",
     "GitPython>=3.1.40,<4.0.0",
@@ -37,6 +31,12 @@ dependencies = [
     "flask>=3.0.0,<4.0.0",
     "pyyaml>=6.0,<7.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/FalkorDB/RepoGraph"
+Repository = "https://github.com/FalkorDB/RepoGraph"
+Issues = "https://github.com/FalkorDB/RepoGraph/issues"
+Documentation = "https://github.com/FalkorDB/RepoGraph#readme"
 
 [project.optional-dependencies]
 dev = [
