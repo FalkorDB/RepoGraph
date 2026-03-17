@@ -83,15 +83,21 @@ def cli(ctx: click.Context, host: str, port: int, graph: str, verbose: bool) -> 
 @click.argument("repo_path", type=click.Path(exists=True))
 @click.option("--max-commits", default=5000, type=int, help="Maximum commits to analyze")
 @click.option("--clear", is_flag=True, help="Clear existing graph before analyzing")
+@click.option("--repo-name", default=None, help="Name for multi-repo support (defaults to dir name)")
 @click.pass_context
-def analyze(ctx: click.Context, repo_path: str, max_commits: int, clear: bool) -> None:
+def analyze(
+    ctx: click.Context, repo_path: str, max_commits: int, clear: bool, repo_name: str | None
+) -> None:
     """Analyze a git repository and build the knowledge graph.
 
     REPO_PATH is the path to the git repository to analyze.
     """
+    import os
+
     from repograph.core.config import AnalysisConfig
     from repograph.core.git_analyzer import analyze_repository
     from repograph.core.graph_builder import build_graph
+    from repograph.core.multi_repo import register_repository, tag_graph_with_repo
 
     db = _get_db(ctx.obj["host"], ctx.obj["port"], ctx.obj["graph"])
 
@@ -102,7 +108,10 @@ def analyze(ctx: click.Context, repo_path: str, max_commits: int, clear: bool) -
 
         setup_schema(db)
 
-        console.print(f"[bold]Analyzing repository:[/] {repo_path}")
+        # Determine repo name for multi-repo tagging
+        effective_name = repo_name or os.path.basename(os.path.abspath(repo_path))
+
+        console.print(f"[bold]Analyzing repository:[/] {repo_path} (as [cyan]{effective_name}[/])")
         with console.status("[bold green]Parsing git history..."):
             analysis_config = AnalysisConfig(max_commits=max_commits)
             result = analyze_repository(repo_path, analysis_config)
@@ -115,6 +124,14 @@ def analyze(ctx: click.Context, repo_path: str, max_commits: int, clear: bool) -
 
         with console.status("[bold green]Building knowledge graph..."):
             build_graph(db, result, analysis_config)
+
+        # Register repository and tag nodes
+        register_repository(db, name=effective_name, path=os.path.abspath(repo_path))
+        stats = tag_graph_with_repo(db, effective_name)
+        console.print(
+            f"  Tagged [bold]{stats['files']}[/] files and "
+            f"[bold]{stats['commits']}[/] commits with repo [cyan]{effective_name}[/]"
+        )
 
         console.print("[bold green]✅ Graph built successfully![/]")
         format_summary(query_graph_summary(db))
@@ -423,6 +440,98 @@ def web(ctx: click.Context, port: int, debug: bool) -> None:
     app = create_app(config)
     console.print(f"[bold green]🌐 Starting web dashboard at http://localhost:{port}[/]")
     app.run(host="0.0.0.0", port=port, debug=debug)
+
+
+@cli.command()
+@click.pass_context
+def snapshot(ctx: click.Context) -> None:
+    """Take a point-in-time snapshot of graph health metrics.
+
+    Captures bus factor, silo count, and risk metrics as a Snapshot node.
+    Use 'repograph trends' to see how metrics change over time.
+    """
+    from repograph.core.snapshots import take_snapshot
+    from repograph.utils.formatters import format_snapshot
+
+    db = _get_db(ctx.obj["host"], ctx.obj["port"], ctx.obj["graph"])
+    try:
+        with console.status("[bold green]Taking snapshot..."):
+            snap = take_snapshot(db)
+        format_snapshot(snap)
+    finally:
+        db.close()
+
+
+@cli.command()
+@click.option("--limit", "-n", default=30, type=int, help="Max snapshots to show")
+@click.pass_context
+def trends(ctx: click.Context, limit: int) -> None:
+    """Show metric trends from snapshot history.
+
+    Tracks how bus factor, silo count, and risk metrics change over time.
+    Take snapshots first with 'repograph snapshot'.
+    """
+    from repograph.core.snapshots import query_trends
+    from repograph.utils.formatters import format_trends
+
+    db = _get_db(ctx.obj["host"], ctx.obj["port"], ctx.obj["graph"])
+    try:
+        results = query_trends(db, limit=limit)
+        format_trends(results)
+    finally:
+        db.close()
+
+
+@cli.command("snapshot-history")
+@click.option("--limit", "-n", default=10, type=int, help="Max snapshots to show")
+@click.pass_context
+def snapshot_history(ctx: click.Context, limit: int) -> None:
+    """List all snapshots taken so far."""
+    from repograph.core.snapshots import query_snapshot_history
+    from repograph.utils.formatters import format_snapshot_history
+
+    db = _get_db(ctx.obj["host"], ctx.obj["port"], ctx.obj["graph"])
+    try:
+        snapshots = query_snapshot_history(db, limit=limit)
+        format_snapshot_history(snapshots)
+    finally:
+        db.close()
+
+
+@cli.command("repos")
+@click.pass_context
+def repos(ctx: click.Context) -> None:
+    """List all repositories in the graph."""
+    from repograph.core.multi_repo import list_repositories
+    from repograph.utils.formatters import format_repos
+
+    db = _get_db(ctx.obj["host"], ctx.obj["port"], ctx.obj["graph"])
+    try:
+        results = list_repositories(db)
+        format_repos(results)
+    finally:
+        db.close()
+
+
+@cli.command("cross-repo-experts")
+@click.option("--min-repos", default=2, type=int, help="Minimum repositories")
+@click.option("--min-score", default=0.5, type=float, help="Minimum knowledge score")
+@click.pass_context
+def cross_repo_experts(ctx: click.Context, min_repos: int, min_score: float) -> None:
+    """Find developers with expertise across multiple repositories.
+
+    Identifies people who bridge knowledge across repos — critical for
+    organizations with microservices or multi-repo architectures.
+    """
+    from repograph.core.multi_repo import query_cross_repo_experts
+    from repograph.utils.formatters import format_cross_repo_experts
+
+    db = _get_db(ctx.obj["host"], ctx.obj["port"], ctx.obj["graph"])
+    try:
+        results = query_cross_repo_experts(db, min_repos=min_repos, min_score=min_score)
+        format_cross_repo_experts(results)
+    finally:
+        db.close()
 
 
 if __name__ == "__main__":

@@ -275,3 +275,154 @@ def format_team_silos(results: list) -> None:
         table.add_row(r.module, r.owning_team, str(r.experts_in_team), str(r.file_count))
 
     console.print(table)
+
+
+def format_snapshot(snapshot) -> None:
+    """Display a single snapshot summary."""
+    from datetime import UTC, datetime
+
+    ts_str = datetime.fromtimestamp(snapshot.timestamp, tz=UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
+    console.print(
+        Panel(
+            f"[bold]Snapshot ID:[/] {snapshot.snapshot_id}\n"
+            f"[bold]Timestamp:[/] {ts_str}\n"
+            f"[bold]Developers:[/] {snapshot.developer_count}\n"
+            f"[bold]Modules:[/] {snapshot.module_count}\n"
+            f"[bold]Files:[/] {snapshot.file_count}\n"
+            f"[bold]Commits:[/] {snapshot.commit_count}\n"
+            f"[bold]Avg Bus Factor:[/] {snapshot.avg_bus_factor:.1f}\n"
+            f"[bold]Knowledge Silos:[/] {snapshot.silo_count}\n"
+            f"[bold]High Risk Modules:[/] {snapshot.high_risk_count}",
+            title="📸 Snapshot Captured",
+            border_style="green",
+        )
+    )
+
+
+def format_snapshot_history(snapshots: list) -> None:
+    """Display snapshot history as a table."""
+    if not snapshots:
+        console.print("[yellow]No snapshots found. Take one with 'repograph snapshot'.[/]")
+        return
+
+    from datetime import UTC, datetime
+
+    table = Table(title="📸 Snapshot History", show_lines=True)
+    table.add_column("ID", style="dim", min_width=8)
+    table.add_column("Timestamp", min_width=20)
+    table.add_column("Avg BF", justify="center")
+    table.add_column("Silos", justify="center")
+    table.add_column("High Risk", justify="center")
+    table.add_column("Devs", justify="center")
+    table.add_column("Modules", justify="center")
+
+    for s in snapshots:
+        ts_str = datetime.fromtimestamp(s.timestamp, tz=UTC).strftime("%Y-%m-%d %H:%M")
+        bf_style = "red" if s.avg_bus_factor < 2 else "green"
+        table.add_row(
+            s.snapshot_id,
+            ts_str,
+            Text(f"{s.avg_bus_factor:.1f}", style=bf_style),
+            str(s.silo_count),
+            str(s.high_risk_count),
+            str(s.developer_count),
+            str(s.module_count),
+        )
+
+    console.print(table)
+
+
+def format_trends(trends: dict) -> None:
+    """Display metric trends with direction indicators."""
+    if not trends:
+        console.print(
+            "[yellow]No trend data. Take at least 2 snapshots with 'repograph snapshot'.[/]"
+        )
+        return
+
+    table = Table(title="📈 Metric Trends", show_lines=True)
+    table.add_column("Metric", style="cyan", min_width=20)
+    table.add_column("Direction", justify="center", min_width=15)
+    table.add_column("Change", justify="right")
+    table.add_column("First → Last", justify="center", min_width=15)
+    table.add_column("Points", justify="center")
+
+    direction_icons = {
+        "improving": Text("📈 Improving", style="bold green"),
+        "degrading": Text("📉 Degrading", style="bold red"),
+        "stable": Text("➡️  Stable", style="dim"),
+    }
+
+    friendly_names = {
+        "avg_bus_factor": "Average Bus Factor",
+        "silo_count": "Knowledge Silos",
+        "high_risk_count": "High-Risk Modules",
+    }
+
+    for name, trend in trends.items():
+        if not trend.points:
+            continue
+
+        first_val = trend.points[0].value
+        last_val = trend.points[-1].value
+
+        change_style = "green" if trend.direction == "improving" else (
+            "red" if trend.direction == "degrading" else "dim"
+        )
+        change_text = Text(f"{trend.change_pct:+.1f}%", style=change_style)
+
+        table.add_row(
+            friendly_names.get(name, name),
+            direction_icons.get(trend.direction, Text(trend.direction)),
+            change_text,
+            f"{first_val:.1f} → {last_val:.1f}",
+            str(len(trend.points)),
+        )
+
+    console.print(table)
+
+
+def format_repos(repos: list) -> None:
+    """Display repository listing."""
+    if not repos:
+        console.print(
+            "[yellow]No repositories found. Analyze a repo with 'repograph analyze --repo-name NAME'.[/]"
+        )
+        return
+
+    table = Table(title="📦 Repositories", show_lines=True)
+    table.add_column("Name", style="cyan", min_width=15)
+    table.add_column("Path", style="dim")
+    table.add_column("Developers", justify="center")
+    table.add_column("Files", justify="center")
+    table.add_column("Commits", justify="center")
+
+    for r in repos:
+        table.add_row(r.name, r.path, str(r.developer_count), str(r.file_count), str(r.commit_count))
+
+    console.print(table)
+
+
+def format_cross_repo_experts(experts: list) -> None:
+    """Display cross-repo experts."""
+    if not experts:
+        console.print("[yellow]No cross-repo experts found. Analyze multiple repos first.[/]")
+        return
+
+    table = Table(title="🌐 Cross-Repository Experts", show_lines=True)
+    table.add_column("Developer", style="green", min_width=15)
+    table.add_column("Email", style="dim")
+    table.add_column("Repos", justify="center")
+    table.add_column("Repository List", style="cyan")
+    table.add_column("Total Score", justify="right")
+
+    for e in experts:
+        table.add_row(
+            e.name,
+            e.email,
+            str(e.repo_count),
+            ", ".join(e.repos),
+            f"{e.total_score:.1f}",
+        )
+
+    console.print(table)
