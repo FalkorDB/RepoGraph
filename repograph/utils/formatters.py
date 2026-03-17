@@ -366,8 +366,10 @@ def format_trends(trends: dict) -> None:
         first_val = trend.points[0].value
         last_val = trend.points[-1].value
 
-        change_style = "green" if trend.direction == "improving" else (
-            "red" if trend.direction == "degrading" else "dim"
+        change_style = (
+            "green"
+            if trend.direction == "improving"
+            else ("red" if trend.direction == "degrading" else "dim")
         )
         change_text = Text(f"{trend.change_pct:+.1f}%", style=change_style)
 
@@ -398,7 +400,9 @@ def format_repos(repos: list) -> None:
     table.add_column("Commits", justify="center")
 
     for r in repos:
-        table.add_row(r.name, r.path, str(r.developer_count), str(r.file_count), str(r.commit_count))
+        table.add_row(
+            r.name, r.path, str(r.developer_count), str(r.file_count), str(r.commit_count)
+        )
 
     console.print(table)
 

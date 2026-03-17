@@ -83,7 +83,9 @@ def cli(ctx: click.Context, host: str, port: int, graph: str, verbose: bool) -> 
 @click.argument("repo_path", type=click.Path(exists=True))
 @click.option("--max-commits", default=5000, type=int, help="Maximum commits to analyze")
 @click.option("--clear", is_flag=True, help="Clear existing graph before analyzing")
-@click.option("--repo-name", default=None, help="Name for multi-repo support (defaults to dir name)")
+@click.option(
+    "--repo-name", default=None, help="Name for multi-repo support (defaults to dir name)"
+)
 @click.pass_context
 def analyze(
     ctx: click.Context, repo_path: str, max_commits: int, clear: bool, repo_name: str | None

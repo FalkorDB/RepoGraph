@@ -46,8 +46,7 @@ def register_repository(
 ) -> None:
     """Create or update a Repository node in the graph."""
     db.query(
-        "MERGE (r:Repository {name: $name}) "
-        "SET r.path = $path, r.url = $url",
+        "MERGE (r:Repository {name: $name}) SET r.path = $path, r.url = $url",
         params={"name": name, "path": path, "url": url},
     )
     logger.info("Registered repository: %s", name)
@@ -63,9 +62,7 @@ def tag_graph_with_repo(db: DatabaseManager, repo_name: str) -> dict[str, int]:
 
     # Tag untagged files
     result = db.query(
-        "MATCH (f:File) WHERE f.repository IS NULL "
-        "SET f.repository = $repo "
-        "RETURN count(f)",
+        "MATCH (f:File) WHERE f.repository IS NULL SET f.repository = $repo RETURN count(f)",
         params={"repo": repo_name},
     )
     if result.result_set:
@@ -73,9 +70,7 @@ def tag_graph_with_repo(db: DatabaseManager, repo_name: str) -> dict[str, int]:
 
     # Tag untagged commits
     result = db.query(
-        "MATCH (c:Commit) WHERE c.repository IS NULL "
-        "SET c.repository = $repo "
-        "RETURN count(c)",
+        "MATCH (c:Commit) WHERE c.repository IS NULL SET c.repository = $repo RETURN count(c)",
         params={"repo": repo_name},
     )
     if result.result_set:
@@ -94,7 +89,9 @@ def tag_graph_with_repo(db: DatabaseManager, repo_name: str) -> dict[str, int]:
         params={"repo": repo_name},
     )
 
-    logger.info("Tagged %d files and %d commits with repo '%s'", stats["files"], stats["commits"], repo_name)
+    logger.info(
+        "Tagged %d files and %d commits with repo '%s'", stats["files"], stats["commits"], repo_name
+    )
     return stats
 
 

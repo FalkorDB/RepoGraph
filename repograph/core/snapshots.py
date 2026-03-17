@@ -80,9 +80,7 @@ def take_snapshot(db: DatabaseManager, min_score: float = 0.5) -> SnapshotSummar
     silos = query_knowledge_silos(db, min_score=min_score)
     risks = query_risk_hotspots(db, min_score=min_score)
 
-    avg_bf = (
-        sum(r.bus_factor for r in bus_factors) / len(bus_factors) if bus_factors else 0.0
-    )
+    avg_bf = sum(r.bus_factor for r in bus_factors) / len(bus_factors) if bus_factors else 0.0
     silo_count = len(silos)
     high_risk_count = sum(1 for r in risks if r.risk_level in ("critical", "high"))
 
@@ -128,7 +126,10 @@ def take_snapshot(db: DatabaseManager, min_score: float = 0.5) -> SnapshotSummar
 
     logger.info(
         "Snapshot %s: avg_bf=%.1f, silos=%d, high_risk=%d",
-        snapshot_id, avg_bf, silo_count, high_risk_count,
+        snapshot_id,
+        avg_bf,
+        silo_count,
+        high_risk_count,
     )
 
     return SnapshotSummary(

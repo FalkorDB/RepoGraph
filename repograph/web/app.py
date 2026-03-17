@@ -294,34 +294,38 @@ def create_app(config: FalkorDBConfig | None = None) -> Flask:
 
             min_score = float(request.args.get("min_score", "0.5"))
             snap = take_snapshot(db, min_score=min_score)
-            return jsonify({
-                "snapshot_id": snap.snapshot_id,
-                "timestamp": snap.timestamp,
-                "developer_count": snap.developer_count,
-                "module_count": snap.module_count,
-                "file_count": snap.file_count,
-                "commit_count": snap.commit_count,
-                "avg_bus_factor": snap.avg_bus_factor,
-                "silo_count": snap.silo_count,
-                "high_risk_count": snap.high_risk_count,
-            })
+            return jsonify(
+                {
+                    "snapshot_id": snap.snapshot_id,
+                    "timestamp": snap.timestamp,
+                    "developer_count": snap.developer_count,
+                    "module_count": snap.module_count,
+                    "file_count": snap.file_count,
+                    "commit_count": snap.commit_count,
+                    "avg_bus_factor": snap.avg_bus_factor,
+                    "silo_count": snap.silo_count,
+                    "high_risk_count": snap.high_risk_count,
+                }
+            )
 
         from repograph.core.snapshots import query_snapshot_history
 
         limit = int(request.args.get("limit", "30"))
         snapshots = query_snapshot_history(db, limit=limit)
-        return jsonify([
-            {
-                "snapshot_id": s.snapshot_id,
-                "timestamp": s.timestamp,
-                "avg_bus_factor": s.avg_bus_factor,
-                "silo_count": s.silo_count,
-                "high_risk_count": s.high_risk_count,
-                "developer_count": s.developer_count,
-                "module_count": s.module_count,
-            }
-            for s in snapshots
-        ])
+        return jsonify(
+            [
+                {
+                    "snapshot_id": s.snapshot_id,
+                    "timestamp": s.timestamp,
+                    "avg_bus_factor": s.avg_bus_factor,
+                    "silo_count": s.silo_count,
+                    "high_risk_count": s.high_risk_count,
+                    "developer_count": s.developer_count,
+                    "module_count": s.module_count,
+                }
+                for s in snapshots
+            ]
+        )
 
     @app.route("/api/trends")
     def api_trends():
@@ -330,15 +334,17 @@ def create_app(config: FalkorDBConfig | None = None) -> Flask:
 
         limit = int(request.args.get("limit", "30"))
         trends = query_trends(db, limit=limit)
-        return jsonify({
-            name: {
-                "metric": t.metric,
-                "direction": t.direction,
-                "change_pct": t.change_pct,
-                "points": [{"timestamp": p.timestamp, "value": p.value} for p in t.points],
+        return jsonify(
+            {
+                name: {
+                    "metric": t.metric,
+                    "direction": t.direction,
+                    "change_pct": t.change_pct,
+                    "points": [{"timestamp": p.timestamp, "value": p.value} for p in t.points],
+                }
+                for name, t in trends.items()
             }
-            for name, t in trends.items()
-        })
+        )
 
     # -----------------------------------------------------------------------
     # Multi-repo endpoints
@@ -350,17 +356,19 @@ def create_app(config: FalkorDBConfig | None = None) -> Flask:
         from repograph.core.multi_repo import list_repositories
 
         repos = list_repositories(db)
-        return jsonify([
-            {
-                "name": r.name,
-                "path": r.path,
-                "url": r.url,
-                "developer_count": r.developer_count,
-                "file_count": r.file_count,
-                "commit_count": r.commit_count,
-            }
-            for r in repos
-        ])
+        return jsonify(
+            [
+                {
+                    "name": r.name,
+                    "path": r.path,
+                    "url": r.url,
+                    "developer_count": r.developer_count,
+                    "file_count": r.file_count,
+                    "commit_count": r.commit_count,
+                }
+                for r in repos
+            ]
+        )
 
     @app.route("/api/repos/<repo_name>/summary")
     def api_repo_summary(repo_name: str):
@@ -377,16 +385,18 @@ def create_app(config: FalkorDBConfig | None = None) -> Flask:
         min_repos = int(request.args.get("min_repos", "2"))
         min_score = float(request.args.get("min_score", "0.5"))
         experts = query_cross_repo_experts(db, min_repos=min_repos, min_score=min_score)
-        return jsonify([
-            {
-                "name": e.name,
-                "email": e.email,
-                "repo_count": e.repo_count,
-                "repos": e.repos,
-                "total_score": e.total_score,
-            }
-            for e in experts
-        ])
+        return jsonify(
+            [
+                {
+                    "name": e.name,
+                    "email": e.email,
+                    "repo_count": e.repo_count,
+                    "repos": e.repos,
+                    "total_score": e.total_score,
+                }
+                for e in experts
+            ]
+        )
 
     # -----------------------------------------------------------------------
     # Webhook endpoint

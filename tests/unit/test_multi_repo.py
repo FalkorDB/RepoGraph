@@ -37,7 +37,9 @@ class TestRegisterRepository:
         """Test that a Repository node is created."""
         mock_db.query.return_value = MockQueryResult([])
 
-        register_repository(mock_db, name="my-repo", path="/path/to/repo", url="https://example.com")
+        register_repository(
+            mock_db, name="my-repo", path="/path/to/repo", url="https://example.com"
+        )
 
         mock_db.query.assert_called_once()
         query_call = mock_db.query.call_args
@@ -81,10 +83,12 @@ class TestListRepositories:
 
     def test_returns_repo_list(self, mock_db):
         """Test listing repositories."""
-        mock_db.query.return_value = MockQueryResult([
-            ["repo-a", "/path/a", "https://a.com", 5, 20, 100],
-            ["repo-b", "/path/b", "", 3, 10, 50],
-        ])
+        mock_db.query.return_value = MockQueryResult(
+            [
+                ["repo-a", "/path/a", "https://a.com", 5, 20, 100],
+                ["repo-b", "/path/b", "", 3, 10, 50],
+            ]
+        )
 
         result = list_repositories(mock_db)
 
@@ -104,9 +108,11 @@ class TestListRepositories:
 
     def test_none_path_and_url(self, mock_db):
         """Test handling of None path/url values."""
-        mock_db.query.return_value = MockQueryResult([
-            ["repo-c", None, None, 1, 5, 10],
-        ])
+        mock_db.query.return_value = MockQueryResult(
+            [
+                ["repo-c", None, None, 1, 5, 10],
+            ]
+        )
 
         result = list_repositories(mock_db)
         assert result[0].path == ""
@@ -118,10 +124,12 @@ class TestQueryCrossRepoExperts:
 
     def test_finds_cross_repo_experts(self, mock_db):
         """Test finding developers across repos."""
-        mock_db.query.return_value = MockQueryResult([
-            ["Alice", "alice@example.com", 3, ["repo-a", "repo-b", "repo-c"], 15.5],
-            ["Bob", "bob@example.com", 2, ["repo-a", "repo-b"], 8.2],
-        ])
+        mock_db.query.return_value = MockQueryResult(
+            [
+                ["Alice", "alice@example.com", 3, ["repo-a", "repo-b", "repo-c"], 15.5],
+                ["Bob", "bob@example.com", 2, ["repo-a", "repo-b"], 8.2],
+            ]
+        )
 
         result = query_cross_repo_experts(mock_db, min_repos=2, min_score=0.5)
 
@@ -141,9 +149,11 @@ class TestQueryCrossRepoExperts:
 
     def test_non_list_repos_handled(self, mock_db):
         """Test handling of non-list repos value."""
-        mock_db.query.return_value = MockQueryResult([
-            ["Alice", "alice@example.com", 1, "not-a-list", 5.0],
-        ])
+        mock_db.query.return_value = MockQueryResult(
+            [
+                ["Alice", "alice@example.com", 1, "not-a-list", 5.0],
+            ]
+        )
 
         result = query_cross_repo_experts(mock_db)
         assert result[0].repos == []
@@ -154,9 +164,11 @@ class TestQueryRepoSummary:
 
     def test_returns_summary(self, mock_db):
         """Test repo summary."""
-        mock_db.query.return_value = MockQueryResult([
-            [5, 20, 3, 100],
-        ])
+        mock_db.query.return_value = MockQueryResult(
+            [
+                [5, 20, 3, 100],
+            ]
+        )
 
         result = query_repo_summary(mock_db, repo_name="my-repo")
 

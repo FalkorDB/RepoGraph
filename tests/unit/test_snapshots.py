@@ -92,7 +92,10 @@ class TestTakeSnapshot:
             patch("repograph.core.snapshots.query_risk_hotspots") as mock_risks,
         ):
             mock_summary.return_value = {
-                "developers": 0, "modules": 0, "files": 0, "commits": 0,
+                "developers": 0,
+                "modules": 0,
+                "files": 0,
+                "commits": 0,
             }
             mock_bf.return_value = []
             mock_silos.return_value = []
@@ -111,10 +114,12 @@ class TestQuerySnapshotHistory:
 
     def test_returns_snapshots(self, mock_db):
         """Test retrieving snapshot history."""
-        mock_db.query.return_value = MockQueryResult([
-            ["abc123", 1000000.0, 5, 3, 20, 100, 2.5, 1, 0],
-            ["def456", 999000.0, 4, 3, 18, 90, 2.0, 2, 1],
-        ])
+        mock_db.query.return_value = MockQueryResult(
+            [
+                ["abc123", 1000000.0, 5, 3, 20, 100, 2.5, 1, 0],
+                ["def456", 999000.0, 4, 3, 18, 90, 2.0, 2, 1],
+            ]
+        )
 
         result = query_snapshot_history(mock_db, limit=10)
 
@@ -143,10 +148,12 @@ class TestQueryTrends:
 
     def test_improving_bus_factor(self, mock_db):
         """Test that increasing bus factor is detected as improving."""
-        mock_db.query.return_value = MockQueryResult([
-            ["snap2", 2000.0, 5, 3, 20, 100, 3.0, 1, 0],  # newest
-            ["snap1", 1000.0, 5, 3, 20, 100, 1.5, 3, 2],  # oldest
-        ])
+        mock_db.query.return_value = MockQueryResult(
+            [
+                ["snap2", 2000.0, 5, 3, 20, 100, 3.0, 1, 0],  # newest
+                ["snap1", 1000.0, 5, 3, 20, 100, 1.5, 3, 2],  # oldest
+            ]
+        )
 
         result = query_trends(mock_db)
 
@@ -157,10 +164,12 @@ class TestQueryTrends:
 
     def test_degrading_silos(self, mock_db):
         """Test that increasing silo count is detected as degrading."""
-        mock_db.query.return_value = MockQueryResult([
-            ["snap2", 2000.0, 5, 3, 20, 100, 2.0, 5, 2],  # newest (5 silos)
-            ["snap1", 1000.0, 5, 3, 20, 100, 2.0, 1, 0],  # oldest (1 silo)
-        ])
+        mock_db.query.return_value = MockQueryResult(
+            [
+                ["snap2", 2000.0, 5, 3, 20, 100, 2.0, 5, 2],  # newest (5 silos)
+                ["snap1", 1000.0, 5, 3, 20, 100, 2.0, 1, 0],  # oldest (1 silo)
+            ]
+        )
 
         result = query_trends(mock_db)
 
@@ -169,10 +178,12 @@ class TestQueryTrends:
 
     def test_stable_metrics(self, mock_db):
         """Test that unchanged metrics are stable."""
-        mock_db.query.return_value = MockQueryResult([
-            ["snap2", 2000.0, 5, 3, 20, 100, 2.0, 2, 1],
-            ["snap1", 1000.0, 5, 3, 20, 100, 2.0, 2, 1],
-        ])
+        mock_db.query.return_value = MockQueryResult(
+            [
+                ["snap2", 2000.0, 5, 3, 20, 100, 2.0, 2, 1],
+                ["snap1", 1000.0, 5, 3, 20, 100, 2.0, 2, 1],
+            ]
+        )
 
         result = query_trends(mock_db)
 
@@ -192,10 +203,12 @@ class TestQueryModuleTrend:
 
     def test_module_history(self, mock_db):
         """Test retrieving trend for a module."""
-        mock_db.query.return_value = MockQueryResult([
-            ["mod/a", 2, 5.0, "high"],
-            ["mod/a", 3, 3.0, "medium"],
-        ])
+        mock_db.query.return_value = MockQueryResult(
+            [
+                ["mod/a", 2, 5.0, "high"],
+                ["mod/a", 3, 3.0, "medium"],
+            ]
+        )
 
         result = query_module_trend(mock_db, module="mod/a")
 
