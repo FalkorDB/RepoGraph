@@ -137,7 +137,7 @@ class TestGraphIntegration:
 
     def test_end_to_end_pipeline(self, db: DatabaseManager) -> None:
         """Full pipeline: seed → query all insights → verify consistency."""
-        summary = query_graph_summary(db)
+        query_graph_summary(db)
 
         # All query types should return data
         bf = query_bus_factor(db, min_score=0.3)

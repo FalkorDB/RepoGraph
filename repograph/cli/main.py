@@ -8,7 +8,7 @@ import sys
 import click
 from rich.console import Console
 
-from repograph.core.config import AppConfig, FalkorDBConfig
+from repograph.core.config import FalkorDBConfig
 from repograph.core.database import ConnectionError, DatabaseManager
 from repograph.core.queries import (
     query_blast_radius,
@@ -114,7 +114,7 @@ def analyze(ctx: click.Context, repo_path: str, max_commits: int, clear: bool) -
         )
 
         with console.status("[bold green]Building knowledge graph..."):
-            stats = build_graph(db, result, analysis_config)
+            build_graph(db, result, analysis_config)
 
         console.print("[bold green]✅ Graph built successfully![/]")
         format_summary(query_graph_summary(db))
@@ -144,7 +144,7 @@ def seed(ctx: click.Context, commits: int, clear: bool) -> None:
         setup_schema(db)
 
         with console.status("[bold green]Generating seed data..."):
-            stats = generate_seed_data(db, num_commits=commits)
+            generate_seed_data(db, num_commits=commits)
 
         console.print("[bold green]✅ Seed data loaded![/]")
         format_summary(query_graph_summary(db))
@@ -301,9 +301,8 @@ def summary(ctx: click.Context) -> None:
 @click.pass_context
 def clear(ctx: click.Context, confirm: bool) -> None:
     """Clear all data from the graph."""
-    if not confirm:
-        if not click.confirm("This will delete all data in the graph. Continue?"):
-            return
+    if not confirm and not click.confirm("This will delete all data in the graph. Continue?"):
+        return
 
     db = _get_db(ctx.obj["host"], ctx.obj["port"], ctx.obj["graph"])
     try:

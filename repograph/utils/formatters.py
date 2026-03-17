@@ -23,7 +23,9 @@ console = Console()
 def format_bus_factor(results: list[BusFactorResult]) -> None:
     """Display bus factor results as a Rich table."""
     if not results:
-        console.print("[yellow]No bus factor data found. Run 'repograph seed' or 'repograph analyze' first.[/]")
+        console.print(
+            "[yellow]No bus factor data found. Run 'repograph seed' or 'repograph analyze' first.[/]"
+        )
         return
 
     table = Table(title="🚌 Bus Factor Report", show_lines=True)
@@ -45,9 +47,11 @@ def format_bus_factor(results: list[BusFactorResult]) -> None:
             bf_icon = "🟢"
 
         bf_text = Text(f"{bf_icon} {r.bus_factor}", style=bf_style)
-        experts_str = ", ".join(
-            f"{e['name']} ({e.get('score', 0):.1f})" for e in r.experts[:3]
-        ) if r.experts else "None"
+        experts_str = (
+            ", ".join(f"{e['name']} ({e.get('score', 0):.1f})" for e in r.experts[:3])
+            if r.experts
+            else "None"
+        )
 
         table.add_row(r.module, bf_text, str(r.file_count), experts_str)
 

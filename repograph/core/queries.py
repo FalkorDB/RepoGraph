@@ -7,7 +7,7 @@ structured results. All queries use parameterized inputs to prevent injection.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from repograph.core.database import DatabaseManager
 

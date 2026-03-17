@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import os
+import pytest
 
 from repograph.core.config import AnalysisConfig, AppConfig, FalkorDBConfig
 
@@ -35,11 +35,8 @@ class TestFalkorDBConfig:
 
     def test_immutable(self) -> None:
         config = FalkorDBConfig()
-        try:
+        with pytest.raises(AttributeError):
             config.host = "other"  # type: ignore[misc]
-            assert False, "Should raise"
-        except AttributeError:
-            pass
 
 
 class TestAnalysisConfig:

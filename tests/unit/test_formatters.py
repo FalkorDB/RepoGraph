@@ -133,7 +133,9 @@ class TestFormatCoupling:
 
     def test_with_coupling(self) -> None:
         couplings = [
-            CouplingResult(module_a="src/api", module_b="src/core", coupling_strength=15, shared_files=8),
+            CouplingResult(
+                module_a="src/api", module_b="src/core", coupling_strength=15, shared_files=8
+            ),
         ]
         output = _capture_output(format_coupling, couplings)
         assert "src/api" in output
@@ -146,10 +148,34 @@ class TestFormatRisks:
 
     def test_with_risks(self) -> None:
         risks = [
-            RiskResult(module="src/core", bus_factor=1, change_frequency=50, risk_score=50.0, risk_level="critical"),
-            RiskResult(module="src/api", bus_factor=3, change_frequency=20, risk_score=6.7, risk_level="high"),
-            RiskResult(module="src/utils", bus_factor=5, change_frequency=10, risk_score=2.0, risk_level="medium"),
-            RiskResult(module="src/docs", bus_factor=8, change_frequency=5, risk_score=0.6, risk_level="low"),
+            RiskResult(
+                module="src/core",
+                bus_factor=1,
+                change_frequency=50,
+                risk_score=50.0,
+                risk_level="critical",
+            ),
+            RiskResult(
+                module="src/api",
+                bus_factor=3,
+                change_frequency=20,
+                risk_score=6.7,
+                risk_level="high",
+            ),
+            RiskResult(
+                module="src/utils",
+                bus_factor=5,
+                change_frequency=10,
+                risk_score=2.0,
+                risk_level="medium",
+            ),
+            RiskResult(
+                module="src/docs",
+                bus_factor=8,
+                change_frequency=5,
+                risk_score=0.6,
+                risk_level="low",
+            ),
         ]
         output = _capture_output(format_risks, risks)
         assert "CRITICAL" in output
@@ -162,7 +188,9 @@ class TestFormatDeveloperOverlap:
         assert "No significant" in output
 
     def test_with_overlap(self) -> None:
-        overlaps = [DeveloperOverlap(dev_a="Alice", dev_b="Bob", shared_files=12, overlap_score=0.85)]
+        overlaps = [
+            DeveloperOverlap(dev_a="Alice", dev_b="Bob", shared_files=12, overlap_score=0.85)
+        ]
         output = _capture_output(format_developer_overlap, overlaps)
         assert "Alice" in output
         assert "Bob" in output
@@ -170,6 +198,8 @@ class TestFormatDeveloperOverlap:
 
 class TestFormatSummary:
     def test_summary(self) -> None:
-        output = _capture_output(format_summary, {"developers": 8, "files": 32, "modules": 9, "commits": 300})
+        output = _capture_output(
+            format_summary, {"developers": 8, "files": 32, "modules": 9, "commits": 300}
+        )
         assert "Developers" in output
         assert "8" in output

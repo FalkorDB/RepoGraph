@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from repograph.core.graph_builder import _infer_language, _extract_module
+from repograph.core.graph_builder import _extract_module, _infer_language
 
 
 class TestInferLanguage:

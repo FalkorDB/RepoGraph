@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import git as gitpython
@@ -147,7 +147,7 @@ def analyze_repository(
         author_name = raw_commit.author.name or "Unknown"
         developers[author_email] = author_name
 
-        ts = datetime.fromtimestamp(raw_commit.committed_date, tz=timezone.utc)
+        ts = datetime.fromtimestamp(raw_commit.committed_date, tz=UTC)
 
         file_changes = _parse_diff_stats(raw_commit)
         numstats = _extract_numstat(raw_commit)

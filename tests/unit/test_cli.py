@@ -116,7 +116,7 @@ class TestCLI:
         mock_db = MagicMock()
         mock_get_db.return_value = mock_db
 
-        result = self.runner.invoke(cli, ["clear"], input="n\n")
+        self.runner.invoke(cli, ["clear"], input="n\n")
         mock_db.clear_graph.assert_not_called()
 
     @patch("repograph.cli.main._get_db")

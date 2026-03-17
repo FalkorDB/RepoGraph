@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import math
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from repograph.core.config import AnalysisConfig
 from repograph.core.database import DatabaseManager
@@ -73,7 +73,7 @@ def build_graph(
     """
     config = config or AnalysisConfig()
     stats: dict[str, int] = defaultdict(int)
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     logger.info("Building graph from %d commits...", len(analysis.commits))
 
@@ -98,8 +98,7 @@ def build_graph(
         language = _infer_language(ext)
 
         db.query(
-            "MERGE (f:File {path: $path}) "
-            "ON CREATE SET f.extension = $ext, f.language = $language",
+            "MERGE (f:File {path: $path}) ON CREATE SET f.extension = $ext, f.language = $language",
             params={"path": filepath, "ext": ext, "language": language},
         )
         stats["files"] += 1
@@ -109,8 +108,7 @@ def build_graph(
         for mod_name, mod_path, depth in modules:
             if mod_path not in seen_modules:
                 db.query(
-                    "MERGE (m:Module {path: $path}) "
-                    "ON CREATE SET m.name = $name, m.depth = $depth",
+                    "MERGE (m:Module {path: $path}) ON CREATE SET m.name = $name, m.depth = $depth",
                     params={"path": mod_path, "name": mod_name, "depth": depth},
                 )
                 seen_modules.add(mod_path)
@@ -261,9 +259,7 @@ def _compute_co_changes(db: DatabaseManager, analysis: AnalysisResult) -> int:
     co_change_last: dict[tuple[str, str], int] = {}
 
     for commit in analysis.commits:
-        paths = [
-            f.path for f in commit.files if f.change_type != "D"
-        ]
+        paths = [f.path for f in commit.files if f.change_type != "D"]
         # Only consider commits with reasonable number of files (skip mega-commits)
         if len(paths) < 2 or len(paths) > 50:
             continue

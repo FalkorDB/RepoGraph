@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import random
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from repograph.core.database import DatabaseManager
 
@@ -143,8 +143,7 @@ def generate_seed_data(db: DatabaseManager, num_commits: int = 300) -> dict[str,
             }
             lang = lang_map.get(ext, "Other")
             db.query(
-                "MERGE (f:File {path: $path}) "
-                "SET f.extension = $ext, f.language = $lang",
+                "MERGE (f:File {path: $path}) SET f.extension = $ext, f.language = $lang",
                 params={"path": filepath, "ext": ext, "lang": lang},
             )
             # Link file to module
@@ -157,7 +156,7 @@ def generate_seed_data(db: DatabaseManager, num_commits: int = 300) -> dict[str,
             stats["files"] += 1
 
     # Generate commits with realistic patterns
-    base_ts = int(datetime(2025, 1, 1, tzinfo=timezone.utc).timestamp())
+    base_ts = int(datetime(2025, 1, 1, tzinfo=UTC).timestamp())
     dev_emails = [email for _, email in DEVELOPERS]
 
     for i in range(num_commits):
@@ -265,7 +264,13 @@ def _compute_seed_knowledge(db: DatabaseManager) -> None:
             "MATCH (d:Developer {email: $email}), (f:File {path: $path}) "
             "MERGE (d)-[k:KNOWS]->(f) "
             "SET k.score = $score, k.last_touched = $last_ts, k.commit_count = $commits",
-            params={"email": email, "path": path, "score": score, "commits": commits, "last_ts": last_ts},
+            params={
+                "email": email,
+                "path": path,
+                "score": score,
+                "commits": commits,
+                "last_ts": last_ts,
+            },
         )
 
 

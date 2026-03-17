@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import os
 import subprocess
-import tempfile
+from datetime import UTC
 from pathlib import Path
 
 import pytest
@@ -71,11 +70,15 @@ class TestAnalyzeRepository:
         subprocess.run(["git", "init"], cwd=repo_dir, capture_output=True, check=True)
         subprocess.run(
             ["git", "config", "user.email", "test@example.com"],
-            cwd=repo_dir, capture_output=True, check=True,
+            cwd=repo_dir,
+            capture_output=True,
+            check=True,
         )
         subprocess.run(
             ["git", "config", "user.name", "Test User"],
-            cwd=repo_dir, capture_output=True, check=True,
+            cwd=repo_dir,
+            capture_output=True,
+            check=True,
         )
 
         # Create a file and commit
@@ -84,7 +87,9 @@ class TestAnalyzeRepository:
         subprocess.run(["git", "add", "."], cwd=repo_dir, capture_output=True, check=True)
         subprocess.run(
             ["git", "commit", "-m", "Initial commit"],
-            cwd=repo_dir, capture_output=True, check=True,
+            cwd=repo_dir,
+            capture_output=True,
+            check=True,
         )
 
         # Create another file and commit
@@ -92,7 +97,9 @@ class TestAnalyzeRepository:
         subprocess.run(["git", "add", "."], cwd=repo_dir, capture_output=True, check=True)
         subprocess.run(
             ["git", "commit", "-m", "Add utils"],
-            cwd=repo_dir, capture_output=True, check=True,
+            cwd=repo_dir,
+            capture_output=True,
+            check=True,
         )
 
         config = AnalysisConfig(max_commits=100)
@@ -116,14 +123,14 @@ class TestFileChange:
 
 class TestCommitInfo:
     def test_creation(self) -> None:
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         ci = CommitInfo(
             hash="abc123",
             message="test commit",
             author_name="Test",
             author_email="test@test.com",
-            timestamp=datetime.now(tz=timezone.utc),
+            timestamp=datetime.now(tz=UTC),
         )
         assert ci.hash == "abc123"
         assert ci.files == []
