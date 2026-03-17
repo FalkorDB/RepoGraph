@@ -83,15 +83,20 @@ Total affected files: 18
   │
   ├──[:AUTHORED]──▶ (:Commit {hash, message, timestamp})
   │                    │
-  │                    └──[:MODIFIED {additions, deletions}]──▶ (:File {path, extension, language})
-  │                                                                │
-  ├──[:KNOWS {score, last_touched, commit_count}]──────────────────┤
-  │                                                                │
-  ├──[:MEMBER_OF]──▶ (:Team {name})                                ├──[:PART_OF]──▶ (:Module {name, path, depth})
-  │                                                                │                    │
-  │                                                                │                    └──[:CHILD_OF]──▶ (:Module)
-  │                                                                │
-  │                                                                └──[:CO_CHANGED_WITH {frequency}]──▶ (:File)
+  │                    ├──[:MODIFIED {additions, deletions}]──▶ (:File {path, extension, language})
+  │                    │                                            │
+  │                    └──[:IN_REPO]──▶ (:Repository {name, path})  ├──[:BELONGS_TO]──▶ (:Repository)
+  │                                                                 │
+  ├──[:KNOWS {score, last_touched, commit_count}]───────────────────┤
+  │                                                                 │
+  ├──[:MEMBER_OF]──▶ (:Team {name})                                 ├──[:PART_OF]──▶ (:Module {name, path, depth})
+  │                                                                 │                    │
+  │                                                                 │                    └──[:CHILD_OF]──▶ (:Module)
+  │                                                                 │
+  │                                                                 └──[:CO_CHANGED_WITH {frequency}]──▶ (:File)
+  │
+(:Snapshot {snapshot_id, timestamp, avg_bus_factor, silo_count, high_risk_count, ...})
+(:ModuleSnapshot {snapshot_id, timestamp, module, bus_factor, risk_score, risk_level})
 ```
 
 ## Architecture
@@ -171,6 +176,11 @@ ORDER BY risk DESC
 | `repograph team-silos` | Find team-level knowledge silos |
 | `repograph import-reviews <repo>` | Import GitHub PR reviews as knowledge signal |
 | `repograph web` | Start the web dashboard with D3.js visualization |
+| `repograph snapshot` | Take a point-in-time snapshot of graph health metrics |
+| `repograph trends` | Show metric trends from snapshot history |
+| `repograph snapshot-history` | List all snapshots taken so far |
+| `repograph repos` | List all repositories in the graph |
+| `repograph cross-repo-experts` | Find developers with expertise across repos |
 
 ## Web Dashboard
 
@@ -212,6 +222,64 @@ repograph teams teams.yml
 # Team-level queries
 repograph team-bus-factor    # Which teams own exclusive modules?
 repograph team-silos         # Which modules are known by only one team?
+```
+
+## Temporal Trend Analysis
+
+Track how your codebase health evolves over time by taking periodic snapshots:
+
+```bash
+# Take a snapshot of current metrics
+repograph snapshot
+
+# View snapshot history
+repograph snapshot-history
+
+# See metric trends (requires 2+ snapshots)
+repograph trends
+```
+
+Each snapshot captures: average bus factor, silo count, high-risk module count, and per-module metrics. The trend engine detects whether metrics are **improving**, **degrading**, or **stable**.
+
+**API endpoints:**
+- `POST /api/snapshots` — take a new snapshot
+- `GET /api/snapshots` — list snapshot history
+- `GET /api/trends` — get metric trends with direction indicators
+
+## Multi-Repository Support
+
+Analyze multiple repositories into a single graph to find cross-repo experts:
+
+```bash
+# Analyze multiple repos with distinct names
+repograph analyze /path/to/frontend --repo-name frontend
+repograph analyze /path/to/backend --repo-name backend
+repograph analyze /path/to/shared-lib --repo-name shared-lib
+
+# List all repositories in the graph
+repograph repos
+
+# Find developers who bridge knowledge across repos
+repograph cross-repo-experts --min-repos 2
+```
+
+Cross-repo queries traverse: `Developer → KNOWS → File → BELONGS_TO → Repository` — a powerful multi-hop graph traversal that identifies people critical to your organization's cross-team knowledge sharing.
+
+**API endpoints:**
+- `GET /api/repos` — list repositories
+- `GET /api/repos/<name>/summary` — get repo-specific stats
+- `GET /api/cross-repo-experts` — find multi-repo experts
+
+## Installation from PyPI
+
+```bash
+pip install repograph
+```
+
+Requires a running FalkorDB instance. The easiest way is via Docker:
+
+```bash
+docker run -p 6379:6379 falkordb/falkordb:latest
 ```
 
 ## GitHub Integration
@@ -290,9 +358,11 @@ repograph/
 │   ├── database.py           # FalkorDB connection manager
 │   ├── git_analyzer.py       # Git history parser
 │   ├── graph_builder.py      # Graph population from git data
+│   ├── multi_repo.py         # Multi-repository support
 │   ├── queries.py            # Core Cypher queries
 │   ├── schema.py             # Graph schema setup
 │   ├── seed.py               # Demo data generator
+│   ├── snapshots.py          # Temporal trend analysis
 │   └── teams.py              # Team model and queries
 ├── integrations/
 │   ├── __init__.py

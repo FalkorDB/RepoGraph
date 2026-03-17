@@ -78,3 +78,12 @@ hotspots
 codebase
 FalkorDB's
 linter
+BELONGS_TO
+IN_REPO
+sparkline
+sparklines
+PyPI
+pypi
+microservices
+timestamp
+repo

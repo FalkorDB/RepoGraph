@@ -14,6 +14,9 @@ INDICES: list[tuple[str, str]] = [
     ("File", "path"),
     ("Module", "path"),
     ("Commit", "hash"),
+    ("Snapshot", "snapshot_id"),
+    ("ModuleSnapshot", "snapshot_id"),
+    ("Repository", "name"),
 ]
 
 
@@ -35,7 +38,7 @@ def setup_schema(db: DatabaseManager) -> None:
 def verify_schema(db: DatabaseManager) -> dict[str, int]:
     """Return counts of each node type to verify graph health."""
     counts: dict[str, int] = {}
-    for label in ["Developer", "File", "Module", "Commit"]:
+    for label in ["Developer", "File", "Module", "Commit", "Snapshot", "Repository"]:
         result = db.query(f"MATCH (n:{label}) RETURN count(n) AS cnt")
         counts[label] = result.result_set[0][0] if result.result_set else 0
     return counts
