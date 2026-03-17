@@ -1,0 +1,25 @@
+# Team definitions for RepoGraph
+# Map developers (by git email) to teams for team-level analysis.
+#
+# Usage: repograph teams teams.yml
+
+teams:
+  - name: Backend
+    members:
+      - alice@example.com
+      - bob@example.com
+      - carol@example.com
+
+  - name: Frontend
+    members:
+      - david@example.com
+      - eve@example.com
+
+  - name: Platform
+    members:
+      - frank@example.com
+      - grace@example.com
+
+  - name: QA
+    members:
+      - henry@example.com

@@ -85,13 +85,13 @@ Total affected files: 18
   │                    │
   │                    └──[:MODIFIED {additions, deletions}]──▶ (:File {path, extension, language})
   │                                                                │
-  └──[:KNOWS {score, last_touched, commit_count}]──────────────────┤
-                                                                   │
-                                                                   ├──[:PART_OF]──▶ (:Module {name, path, depth})
-                                                                   │                    │
-                                                                   │                    └──[:CHILD_OF]──▶ (:Module)
-                                                                   │
-                                                                   └──[:CO_CHANGED_WITH {frequency}]──▶ (:File)
+  ├──[:KNOWS {score, last_touched, commit_count}]──────────────────┤
+  │                                                                │
+  ├──[:MEMBER_OF]──▶ (:Team {name})                                ├──[:PART_OF]──▶ (:Module {name, path, depth})
+  │                                                                │                    │
+  │                                                                │                    └──[:CHILD_OF]──▶ (:Module)
+  │                                                                │
+  │                                                                └──[:CO_CHANGED_WITH {frequency}]──▶ (:File)
 ```
 
 ## Architecture
@@ -166,6 +166,75 @@ ORDER BY risk DESC
 | `repograph overlap` | Show developer knowledge overlap |
 | `repograph summary` | Show graph statistics |
 | `repograph clear` | Clear all graph data |
+| `repograph teams <file>` | Load team definitions from YAML |
+| `repograph team-bus-factor` | Show bus factor at team level |
+| `repograph team-silos` | Find team-level knowledge silos |
+| `repograph import-reviews <repo>` | Import GitHub PR reviews as knowledge signal |
+| `repograph web` | Start the web dashboard with D3.js visualization |
+
+## Web Dashboard
+
+RepoGraph includes an interactive web dashboard with D3.js force-directed graph visualization:
+
+```bash
+# Start the dashboard (requires FalkorDB with data)
+repograph web --port 5001
+
+# Or with Docker Compose
+docker-compose up -d
+# Open http://localhost:5001
+```
+
+The dashboard includes:
+- **Interactive force-directed graph** — developers, modules, and teams as nodes; knowledge, coupling, and membership as edges
+- **Tabbed insights panel** — Overview, Bus Factor, Risks, Coupling, Teams
+- **Search and filtering** — find developers, modules, or files
+- **Node highlighting** — click a module to highlight its connections
+- **Dark theme** — GitHub-inspired design
+
+## Team-Level Analysis
+
+Map developers to teams for aggregate insights:
+
+```yaml
+# teams.yml
+teams:
+  - name: Backend
+    members: [alice@example.com, bob@example.com]
+  - name: Frontend
+    members: [carol@example.com]
+```
+
+```bash
+# Load team definitions
+repograph teams teams.yml
+
+# Team-level queries
+repograph team-bus-factor    # Which teams own exclusive modules?
+repograph team-silos         # Which modules are known by only one team?
+```
+
+## GitHub Integration
+
+### PR Review Import
+PR reviews are a strong signal of code knowledge — someone who reviewed code understands it:
+
+```bash
+# Import PR reviews as knowledge signal (requires gh CLI)
+repograph import-reviews owner/repo --limit 100
+```
+
+### Reviewer Bot
+A GitHub Action (`.github/workflows/reviewer-bot.yml`) auto-suggests reviewers on PRs based on the knowledge graph. It posts a comment listing the best reviewers for each changed file.
+
+### Webhook for Continuous Analysis
+The web server includes a webhook endpoint for automatic re-analysis on push:
+
+```
+POST http://host:5001/webhook/push
+```
+
+Configure in GitHub: Settings → Webhooks → Payload URL → `http://host:5001/webhook/push`.
 
 ## Configuration
 
@@ -223,10 +292,19 @@ repograph/
 │   ├── graph_builder.py      # Graph population from git data
 │   ├── queries.py            # Core Cypher queries
 │   ├── schema.py             # Graph schema setup
-│   └── seed.py               # Demo data generator
-└── utils/
+│   ├── seed.py               # Demo data generator
+│   └── teams.py              # Team model and queries
+├── integrations/
+│   ├── __init__.py
+│   └── github.py             # GitHub PR review integration
+├── utils/
+│   ├── __init__.py
+│   └── formatters.py         # Rich terminal formatters
+└── web/
     ├── __init__.py
-    └── formatters.py          # Rich terminal formatters
+    ├── app.py                # Flask web API
+    └── templates/
+        └── dashboard.html    # D3.js interactive dashboard
 tests/
 ├── unit/                      # Unit tests (no FalkorDB needed)
 └── integration/               # Integration tests (require FalkorDB)

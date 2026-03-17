@@ -27,5 +27,22 @@ services:
       - ./repos:/repos:ro
     entrypoint: ["python", "-m", "repograph.cli.main", "--host", "falkordb"]
 
+  web:
+    build: .
+    ports:
+      - "${REPOGRAPH_WEB_PORT:-5001}:5001"
+    depends_on:
+      falkordb:
+        condition: service_healthy
+    environment:
+      - FALKORDB_HOST=falkordb
+      - FALKORDB_PORT=6379
+      - REPOGRAPH_GRAPH_NAME=repograph
+      - REPOGRAPH_REPO_PATH=/repos
+    volumes:
+      - ./repos:/repos:ro
+    entrypoint: ["python", "-m", "repograph.cli.main", "--host", "falkordb", "web"]
+    restart: unless-stopped
+
 volumes:
   falkordb_data:
