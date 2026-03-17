@@ -25,6 +25,8 @@ from repograph.utils.formatters import (
     format_risks,
     format_silos,
     format_summary,
+    format_team_bus_factor,
+    format_team_silos,
 )
 
 
@@ -203,3 +205,47 @@ class TestFormatSummary:
         )
         assert "Developers" in output
         assert "8" in output
+
+
+class TestFormatTeamBusFactor:
+    def test_empty(self) -> None:
+        output = _capture_output(format_team_bus_factor, [])
+        assert "No team data" in output
+
+    def test_with_results(self) -> None:
+        from repograph.core.teams import TeamBusFactor
+
+        results = [
+            TeamBusFactor(
+                team="Backend",
+                member_count=3,
+                modules_covered=5,
+                exclusive_modules=["src/api", "src/core"],
+            ),
+            TeamBusFactor(
+                team="Frontend",
+                member_count=2,
+                modules_covered=3,
+                exclusive_modules=[],
+            ),
+        ]
+        output = _capture_output(format_team_bus_factor, results)
+        assert "Backend" in output
+        assert "Frontend" in output
+        assert "src/api" in output
+
+
+class TestFormatTeamSilos:
+    def test_empty(self) -> None:
+        output = _capture_output(format_team_silos, [])
+        assert "No team-level silos" in output
+
+    def test_with_results(self) -> None:
+        from repograph.core.teams import TeamSilo
+
+        results = [
+            TeamSilo(module="src/billing", owning_team="Backend", experts_in_team=2, file_count=5),
+        ]
+        output = _capture_output(format_team_silos, results)
+        assert "src/billing" in output
+        assert "Backend" in output

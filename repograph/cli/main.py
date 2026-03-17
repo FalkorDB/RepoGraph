@@ -312,5 +312,118 @@ def clear(ctx: click.Context, confirm: bool) -> None:
         db.close()
 
 
+@cli.command()
+@click.argument("teams_file", type=click.Path(exists=True))
+@click.pass_context
+def teams(ctx: click.Context, teams_file: str) -> None:
+    """Load team definitions from a YAML file and build team graph.
+
+    TEAMS_FILE is a YAML file with team definitions. Format:
+
+        teams:
+          - name: Backend
+            members: [alice@example.com, bob@example.com]
+    """
+    from repograph.core.teams import build_team_graph, load_teams_from_yaml
+
+    db = _get_db(ctx.obj["host"], ctx.obj["port"], ctx.obj["graph"])
+    try:
+        team_configs = load_teams_from_yaml(teams_file)
+        stats = build_team_graph(db, team_configs)
+        console.print(
+            f"[bold green]✅ Loaded {stats['teams']} teams "
+            f"with {stats['memberships']} memberships.[/]"
+        )
+    except (FileNotFoundError, ValueError) as e:
+        console.print(f"[bold red]Error:[/] {e}")
+        sys.exit(1)
+    finally:
+        db.close()
+
+
+@cli.command("team-bus-factor")
+@click.option("--min-score", default=0.5, type=float, help="Minimum knowledge score threshold")
+@click.pass_context
+def team_bus_factor(ctx: click.Context, min_score: float) -> None:
+    """Show bus factor analysis at team level.
+
+    Identifies modules exclusively owned by a single team — a team-level risk.
+    """
+    from repograph.core.teams import query_team_bus_factor
+    from repograph.utils.formatters import format_team_bus_factor
+
+    db = _get_db(ctx.obj["host"], ctx.obj["port"], ctx.obj["graph"])
+    try:
+        results = query_team_bus_factor(db, min_score=min_score)
+        format_team_bus_factor(results)
+    finally:
+        db.close()
+
+
+@cli.command("team-silos")
+@click.option("--min-score", default=0.5, type=float, help="Minimum knowledge score threshold")
+@click.pass_context
+def team_silos(ctx: click.Context, min_score: float) -> None:
+    """Find modules that are knowledge silos at the team level."""
+    from repograph.core.teams import query_team_silos
+    from repograph.utils.formatters import format_team_silos
+
+    db = _get_db(ctx.obj["host"], ctx.obj["port"], ctx.obj["graph"])
+    try:
+        results = query_team_silos(db, min_score=min_score)
+        format_team_silos(results)
+    finally:
+        db.close()
+
+
+@cli.command("import-reviews")
+@click.argument("github_repo")
+@click.option("--limit", default=50, type=int, help="Max PRs to fetch")
+@click.pass_context
+def import_reviews(ctx: click.Context, github_repo: str, limit: int) -> None:
+    """Import PR review data from GitHub as a knowledge signal.
+
+    GITHUB_REPO is in owner/repo format (e.g., FalkorDB/nova2).
+    Requires the GitHub CLI (gh) to be installed and authenticated.
+    """
+    from repograph.integrations.github import fetch_pr_reviews, integrate_reviews
+
+    db = _get_db(ctx.obj["host"], ctx.obj["port"], ctx.obj["graph"])
+    try:
+        with console.status("[bold green]Fetching PR reviews from GitHub..."):
+            reviews = fetch_pr_reviews(github_repo, limit=limit)
+
+        if not reviews:
+            console.print("[yellow]No PR reviews found.[/]")
+            return
+
+        console.print(f"  Found [bold]{len(reviews)}[/] reviews")
+        stats = integrate_reviews(db, reviews)
+        console.print(
+            f"[bold green]✅ Integrated {stats['reviews_processed']} reviews, "
+            f"boosted {stats['knowledge_boosted']} knowledge edges.[/]"
+        )
+    finally:
+        db.close()
+
+
+@cli.command("web")
+@click.option("--port", "-p", default=5001, type=int, help="Web server port")
+@click.option("--debug", is_flag=True, help="Enable debug mode")
+@click.pass_context
+def web(ctx: click.Context, port: int, debug: bool) -> None:
+    """Start the web dashboard with D3.js graph visualization."""
+    from repograph.web.app import create_app
+
+    config = FalkorDBConfig(
+        host=ctx.obj["host"],
+        port=ctx.obj["port"],
+        graph_name=ctx.obj["graph"],
+    )
+    app = create_app(config)
+    console.print(f"[bold green]🌐 Starting web dashboard at http://localhost:{port}[/]")
+    app.run(host="0.0.0.0", port=port, debug=debug)
+
+
 if __name__ == "__main__":
     cli()

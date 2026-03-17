@@ -232,3 +232,46 @@ def format_summary(summary: dict) -> None:
             border_style="blue",
         )
     )
+
+
+def format_team_bus_factor(results: list) -> None:
+    """Display team bus factor results."""
+    if not results:
+        console.print("[yellow]No team data found. Load teams with 'repograph teams <file>'.[/]")
+        return
+
+    table = Table(title="👥 Team Bus Factor", show_lines=True)
+    table.add_column("Team", style="cyan", min_width=15)
+    table.add_column("Members", justify="center")
+    table.add_column("Modules", justify="center")
+    table.add_column("Exclusive Modules", style="red", min_width=25)
+
+    for r in results:
+        exclusive = ", ".join(r.exclusive_modules) if r.exclusive_modules else "None ✅"
+        exclusive_style = "bold red" if r.exclusive_modules else "green"
+        table.add_row(
+            r.team,
+            str(r.member_count),
+            str(r.modules_covered),
+            Text(exclusive, style=exclusive_style),
+        )
+
+    console.print(table)
+
+
+def format_team_silos(results: list) -> None:
+    """Display team-level knowledge silos."""
+    if not results:
+        console.print("[green]✅ No team-level silos detected.[/]")
+        return
+
+    table = Table(title="🏢 Team-Level Silos", show_lines=True)
+    table.add_column("Module", style="cyan", min_width=20)
+    table.add_column("Owning Team", style="yellow")
+    table.add_column("Experts", justify="center")
+    table.add_column("Files", justify="center")
+
+    for r in results:
+        table.add_row(r.module, r.owning_team, str(r.experts_in_team), str(r.file_count))
+
+    console.print(table)

@@ -129,3 +129,29 @@ class TestCLI:
         with patch("repograph.core.seed.generate_seed_data", return_value={"commits": 100}):
             result = self.runner.invoke(cli, ["seed", "--commits", "100"])
         assert result.exit_code == 0
+
+    def test_teams_command_in_help(self) -> None:
+        result = self.runner.invoke(cli, ["--help"])
+        assert "teams" in result.output
+        assert "team-bus-factor" in result.output
+        assert "team-silos" in result.output
+        assert "import-reviews" in result.output
+        assert "web" in result.output
+
+    @patch("repograph.cli.main._get_db")
+    def test_team_bus_factor_command(self, mock_get_db: MagicMock) -> None:
+        mock_db = MagicMock()
+        mock_get_db.return_value = mock_db
+        mock_db.query.return_value = MagicMock(result_set=[])
+
+        result = self.runner.invoke(cli, ["team-bus-factor"])
+        assert result.exit_code == 0
+
+    @patch("repograph.cli.main._get_db")
+    def test_team_silos_command(self, mock_get_db: MagicMock) -> None:
+        mock_db = MagicMock()
+        mock_get_db.return_value = mock_db
+        mock_db.query.return_value = MagicMock(result_set=[])
+
+        result = self.runner.invoke(cli, ["team-silos"])
+        assert result.exit_code == 0
