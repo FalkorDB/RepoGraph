@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  falkordb:
+    image: falkordb/falkordb:latest
+    ports:
+      - "${FALKORDB_PORT:-6379}:6379"
+    volumes:
+      - falkordb_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  repograph:
+    build: .
+    depends_on:
+      falkordb:
+        condition: service_healthy
+    environment:
+      - FALKORDB_HOST=falkordb
+      - FALKORDB_PORT=6379
+      - REPOGRAPH_GRAPH_NAME=repograph
+    volumes:
+      - ./repos:/repos:ro
+    entrypoint: ["python", "-m", "repograph.cli.main", "--host", "falkordb"]
+
+volumes:
+  falkordb_data:

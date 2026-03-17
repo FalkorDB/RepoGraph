@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "repograph"
+version = "0.1.0"
+description = "Git repository intelligence powered by FalkorDB graph analysis"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.11"
+authors = [
+    {name = "RepoGraph Contributors"}
+]
+keywords = ["git", "graph", "falkordb", "bus-factor", "code-analysis"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+    "falkordb>=1.6.0,<2.0.0",
+    "GitPython>=3.1.40,<4.0.0",
+    "click>=8.1.0,<9.0.0",
+    "rich>=13.0.0,<15.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0,<9.0.0",
+    "pytest-cov>=4.0.0,<6.0.0",
+    "pytest-mock>=3.10.0,<4.0.0",
+    "ruff>=0.4.0,<1.0.0",
+]
+
+[project.scripts]
+repograph = "repograph.cli.main:cli"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM", "TCH"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: marks tests as integration tests (require FalkorDB)",
+]
+
+[tool.coverage.run]
+source = ["repograph"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 70
